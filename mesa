@@ -1,0 +1,128 @@
+#! /usr/bin/env ruby
+require "thor"
+require "fileutils"
+require "mesa_script"
+
+class MyCLI < Thor
+  option :simple, :type => :boolean, :aliases => :s,
+  :desc => "Just copy work directory and rename it. Nothing done with " +
+           "MesaScript."
+  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar], 
+  :desc => "Point `inlist` to main inlist for pgstar in addition to star_job " +
+           "and controls (default points to `inlist_pgstar`)."
+
+  desc "new [NEW_DIR]", "Create MESA work dir called NEW_DIR (default 'work')."
+  long_desc <<-LONGDESC
+    `mesa new` will create a new work directory generated from your current
+    $MESA_DIR/star/work. The argument specifies the name of the new directory,
+    and the base name of the directory will be used to rename `inlist_project`
+    to `inlist_BASENAME_OF_ARGUMENT`. Finally, it uses MesaScript to point the
+    base `inlist` to the new one and converts the new inlist to MesaScript for
+    easy automation.
+  LONGDESC
+  def new(new_dir="work")
+    unless ENV['MESA_DIR']
+      puts "WARNING: No environment variable $MESA_DIR found. Exiting."
+      return
+    end
+    work_dir = File.join(ENV['MESA_DIR'], 'star', 'work')
+    new_loc = new_dir
+    basename = File.basename(new_loc)
+    FileUtils.cp_r(work_dir, new_loc, :verbose => true)
+    unless options[:simple]
+      old_inlist_name = File.join(new_loc, "inlist_project")
+      new_inlist_name = File.join(new_loc, "inlist_#{basename}")
+      File.rename(old_inlist_name, new_inlist_name)
+      if options[:pgstar]
+        create_control_inlist(new_loc, new_inlist_name, new_inlist_name,
+                              new_inlist_name)
+      else
+        create_control_inlist(new_loc, new_inlist_name, new_inlist_name)
+      end
+      create_ms_file(new_inlist_name, File.join(new_loc, basename + '.rb'))
+    end
+  end
+  
+  desc "point INLIST", "Point main `inlist` to INLIST."
+  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar], 
+  :desc => "Point `inlist` to INLIST for pgstar in addition to star_job " +
+           "and controls (default points to `inlist_pgstar`)."
+  def point(inlist)
+    if options[:pgstar]
+      create_control_inlist(Dir.pwd, inlist, inlist, inlist)
+    else
+      create_control_inlist(Dir.pwd, inlist, inlist)
+    end
+  end
+  
+  desc "test [TEST_SUITE_CASE] [NEW_DIR]", "Copy test suite case work " +
+       "directory with name TEST_SUITE_CASE to location NEW_DIR."
+  long_desc <<-LONGDESC
+    `mesa test` will primarily create a new work directory based on an existing
+    test case located in $MESA_DIR/star/test_suite. Since the structure of
+    these directories varies wildly, no MesaScript or renaming niceties are 
+    done as in the standard `mesa new` command. The first argument is the name
+    of the test suite case to be copied. The second argument, if provided, will
+    be the name of the new directory. If this is omitted, the name remains the
+    same. If no arguments are given a list of available test suite cases are
+    printed out and no directories are copied.
+  LONGDESC
+  option :list, :type => :boolean, :aliases => :l, 
+  :desc => "lists available test suite cases"
+  
+  def test(test_case=nil, new_dir=nil)
+    unless ENV['MESA_DIR']
+      puts "WARNING: No environment variable $MESA_DIR found. Exiting."
+      return
+    end
+    test_suite_dir = File.join(ENV['MESA_DIR'], 'star', 'test_suite')
+    if options[:list] or test_case.nil?
+      puts "test cases in #{test_suite_dir}:"
+      puts Dir.entries(test_suite_dir).select { |entry| entry[0] != '.' }
+      return
+    end
+    
+    work_dir = File.join(test_suite_dir, test_case)
+    unless File.directory?(work_dir)
+      puts "Unable to locate test suite case #{test_case} in directory " +
+      test_suite_dir + ". Exiting."
+      return
+    end
+    new_dir ||= File.join(FileUtils::pwd, test_case)
+    FileUtils.cp_r(work_dir, new_dir, :verbose => true)
+    inlist_file = File.join(new_dir, 'inlist')
+    inlist_lines = IO.readlines(inlist_file).reject do |line|
+      line =~ /mesa_dir/
+    end
+    IO.write(inlist_file, inlist_lines.join)
+    makefile = File.join(new_dir, 'make', 'makefile')
+    make_lines = IO.readlines(makefile)
+    make_lines.reject! { |line| line =~ /\A\s*MESA_DIR/ }
+    IO.write(makefile, make_lines.join)
+  end
+    
+  private
+  def create_ms_file(inlist_name, ms_name)
+    ms_name += '.rb' unless ms_name[-3..-1] == '.rb'
+    source = File.join(inlist_name)
+    output = File.join(ms_name)
+    Inlist.inlist_to_mesascript(source, output)
+  end
+  
+  def create_control_inlist(dir, star_job, controls, pgstar = "inlist_pgstar")
+    Inlist.make_inlist(File.join(dir, 'inlist')) do
+          read_extra_star_job_inlist1 true
+          extra_star_job_inlist1_name star_job
+
+          read_extra_controls_inlist1 true
+          extra_controls_inlist1_name controls
+
+          read_extra_pgstar_inlist1 true
+          extra_pgstar_inlist1_name pgstar
+  
+      # / ! end of pgstar namelist
+    end
+  end
+end
+
+MyCLI.start(ARGV)
