@@ -90,11 +90,16 @@ class MyCLI < Thor
     end
     new_dir ||= File.join(FileUtils::pwd, test_case)
     FileUtils.cp_r(work_dir, new_dir, :verbose => true)
-    inlist_file = File.join(new_dir, 'inlist')
-    inlist_lines = IO.readlines(inlist_file).reject do |line|
-      line =~ /mesa_dir/
+    inlist_files = Dir.glob(File.join(new_dir,"inlist*"))
+    inlist_files.each do |inlist_file|
+      inlist_lines = IO.readlines(inlist_file).reject do |line|
+        line.downcase =~ /mesa_dir/
+      end
+      new_inlist_lines = inlist_lines.map do |line|
+        line.sub('../../../', File.join(ENV['MESA_DIR'], ''))
+      end
+      IO.write(inlist_file, new_inlist_lines.join)
     end
-    IO.write(inlist_file, inlist_lines.join)
     makefile = File.join(new_dir, 'make', 'makefile')
     make_lines = IO.readlines(makefile)
     make_lines.reject! { |line| line =~ /\A\s*MESA_DIR/ }
