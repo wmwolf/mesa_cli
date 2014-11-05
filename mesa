@@ -65,7 +65,11 @@ class MyCLI < Thor
     of the test suite case to be copied. The second argument, if provided, will
     be the name of the new directory. If this is omitted, the name remains the
     same. If no arguments are given a list of available test suite cases are
-    printed out and no directories are copied.
+    printed out and no directories are copied. The resulting work directory
+    will be "de-test-suite-ified". MESA_DIR will not be set by the makefile
+    or the inlist, and references to proprietary test_suite files are removed.
+    All other references to things in the mesa tree are now made relative to
+    the user's set value of MESA_DIR.
   LONGDESC
   option :list, :type => :boolean, :aliases => :l, 
   :desc => "lists available test suite cases"
