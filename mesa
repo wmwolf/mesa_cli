@@ -95,14 +95,35 @@ class MyCLI < Thor
       inlist_lines = IO.readlines(inlist_file).reject do |line|
         line.downcase =~ /mesa_dir/
       end
+      # remove references to a new MESA_DIR
       new_inlist_lines = inlist_lines.map do |line|
         line.sub('../../../', File.join(ENV['MESA_DIR'], ''))
       end
+
+      # delete references to test_suite inlists
+      test_suite_inlists = []
+      # match lines with "extra_star_job_inlist1" etc. and "../", 
+      # and captures inlist name in $1
+      test_suite_inlist_matcher = /extra_(.+\d)_name.*\.\.\//
+      new_inlist_lines.each do |line|
+        if line =~ test_suite_inlist_matcher
+          test_suite_inlists << $1
+        end
+      end
+      unless test_suite_inlists.empty?
+        test_suite_inlists.each do |bad_inlist|
+          new_inlist_lines.reject! { |line| line.include?(bad_inlist)}
+        end
+      end
+
       IO.write(inlist_file, new_inlist_lines.join)
     end
     makefile = File.join(new_dir, 'make', 'makefile')
     make_lines = IO.readlines(makefile)
+    # Make sure MESA_DIR is not set in makefile
     make_lines.reject! { |line| line =~ /\A\s*MESA_DIR/ }
+    # Make sure no local references to files in mesa tree are made
+    make_lines.reject! { |line| line =~ /\.\./ }
     IO.write(makefile, make_lines.join)
   end
     
