@@ -31,13 +31,13 @@ class MyCLI < Thor
     FileUtils.cp_r(work_dir, new_loc, :verbose => true)
     unless options[:simple]
       old_inlist_name = File.join(new_loc, "inlist_project")
-      new_inlist_name = File.join(new_loc, "inlist_#{basename}")
+      short_name = "inlist_#{basename}"
+      new_inlist_name = File.join(new_loc, short_name)
       File.rename(old_inlist_name, new_inlist_name)
       if options[:pgstar]
-        create_control_inlist(new_loc, new_inlist_name, new_inlist_name,
-                              new_inlist_name)
+        create_control_inlist(new_loc, short_name, short_name, short_name)
       else
-        create_control_inlist(new_loc, new_inlist_name, new_inlist_name)
+        create_control_inlist(new_loc, short_name, short_name)
       end
       create_ms_file(new_inlist_name, File.join(new_loc, basename + '.rb'))
     end
@@ -65,11 +65,7 @@ class MyCLI < Thor
     of the test suite case to be copied. The second argument, if provided, will
     be the name of the new directory. If this is omitted, the name remains the
     same. If no arguments are given a list of available test suite cases are
-    printed out and no directories are copied. The resulting work directory
-    will be "de-test-suite-ified". MESA_DIR will not be set by the makefile
-    or the inlist, and references to proprietary test_suite files are removed.
-    All other references to things in the mesa tree are now made relative to
-    the user's set value of MESA_DIR.
+    printed out and no directories are copied.
   LONGDESC
   option :list, :type => :boolean, :aliases => :l, 
   :desc => "lists available test suite cases"
