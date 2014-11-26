@@ -127,18 +127,22 @@ class MyCLI < Thor
     IO.write(makefile, make_lines.join)
   end
 
-  desc "default NAMELIST_NAME", "Open defaults file for namelist NAMELIST_NAME."
-  def default(namelist_name)
+  desc "default FILE_NAME", "Open defaults file for namelist FILE_NAME."
+  def default(filename)
     return unless check_for_mesa_dir
     defaults_dir = File.join(ENV['MESA_DIR'], 'star', 'defaults')
-    unless %w{star_job controls pgstar}.include?(namelist_name)
-      puts <<-BAD_INLIST
-      Invalid inlist name: #{namelist_name}. Must use 'star_job', 'controls', or
-      'pgstar'.
-      BAD_INLIST
+    suffix = case
+    when %w{star_job controls pgstar}.include?(filename) then '.defaults'
+    when %w{profile_columns history_columns}.include?(filename) then '.list'
+    else
+      puts <<-BAD_NAME
+      Invalid file name: #{filename}. Must use 'star_job', 'controls', 'pgstar',
+      'profile_columns', or 'history_columns'.
+      BAD_NAME
       return
     end
-    system("$EDITOR #{File.join(defaults_dir, namelist_name)}.defaults")
+    editor = ENV['EDITOR'] || 'less'
+    system("#{editor} #{File.join(defaults_dir, filename)}#{suffix}")
   end
 
 
