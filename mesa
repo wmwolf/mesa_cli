@@ -1,7 +1,12 @@
 #! /usr/bin/env ruby
 require "thor"
 require "fileutils"
-require "mesa_script"
+begin
+  require "mesa_script"
+  $use_mesascript = true
+rescue LoadError
+  $use_mesascript = false
+end
 
 class MyCLI < Thor
   option :simple, :type => :boolean, :aliases => :s,
@@ -18,7 +23,7 @@ class MyCLI < Thor
     and the base name of the directory will be used to rename `inlist_project`
     to `inlist_BASENAME_OF_ARGUMENT`. Finally, it uses MesaScript to point the
     base `inlist` to the new one and converts the new inlist to MesaScript for
-    easy automation.
+    easy automation. This is only done if MesaScript is available.
   LONGDESC
   def new(new_dir="work")
     return unless check_for_mesa_dir
@@ -122,21 +127,35 @@ class MyCLI < Thor
     IO.write(makefile, make_lines.join)
   end
 
+  desc "default NAMELIST_NAME", "Open defaults file for namelist NAMELIST_NAME."
+  def default(namelist_name)
+    return unless check_for_mesa_dir
+    defaults_dir = File.join(ENV['MESA_DIR'], 'star', 'defaults')
+    unless %w{star_job controls pgstar}.include?(namelist_name)
+      puts <<-BAD_INLIST
+      Invalid inlist name: #{namelist_name}. Must use 'star_job', 'controls', or
+      'pgstar'.
+      BAD_INLIST
+      return
+    end
+    system("$EDITOR #{File.join(defaults_dir, namelist_name)}.defaults")
+  end
+
+
   private
   def create_ms_file(inlist_name, ms_name)
     ms_name += '.rb' unless ms_name[-3..-1] == '.rb'
     source = File.join(inlist_name)
     output = File.join(ms_name)
-    Inlist.inlist_to_mesascript(source, output)
+    Inlist.inlist_to_mesascript(source, output) if $use_mesascript
   end
   
   def check_for_mesa_dir
-    return true unless ENV['MESA_DIR']
+    return true if ENV['MESA_DIR']
 
     puts "WARNING: No environment variable $MESA_DIR found. Exiting."
     return false
   end
-
 
   def create_control_inlist(dir, star_job, controls, pgstar = "inlist_pgstar")
     Inlist.make_inlist(File.join(dir, 'inlist')) do
