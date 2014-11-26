@@ -21,10 +21,7 @@ class MyCLI < Thor
     easy automation.
   LONGDESC
   def new(new_dir="work")
-    unless ENV['MESA_DIR']
-      puts "WARNING: No environment variable $MESA_DIR found. Exiting."
-      return
-    end
+    return unless check_for_mesa_dir
     work_dir = File.join(ENV['MESA_DIR'], 'star', 'work')
     new_loc = new_dir
     basename = File.basename(new_loc)
@@ -71,10 +68,8 @@ class MyCLI < Thor
   :desc => "lists available test suite cases"
   
   def test(test_case=nil, new_dir=nil)
-    unless ENV['MESA_DIR']
-      puts "WARNING: No environment variable $MESA_DIR found. Exiting."
-      return
-    end
+    return unless check_for_mesa_dir 
+
     test_suite_dir = File.join(ENV['MESA_DIR'], 'star', 'test_suite')
     if options[:list] or test_case.nil?
       puts "test cases in #{test_suite_dir}:"
@@ -126,7 +121,7 @@ class MyCLI < Thor
     make_lines.reject! { |line| line =~ /\.\./ }
     IO.write(makefile, make_lines.join)
   end
-    
+
   private
   def create_ms_file(inlist_name, ms_name)
     ms_name += '.rb' unless ms_name[-3..-1] == '.rb'
@@ -135,6 +130,14 @@ class MyCLI < Thor
     Inlist.inlist_to_mesascript(source, output)
   end
   
+  def check_for_mesa_dir
+    return true unless ENV['MESA_DIR']
+
+    puts "WARNING: No environment variable $MESA_DIR found. Exiting."
+    return false
+  end
+
+
   def create_control_inlist(dir, star_job, controls, pgstar = "inlist_pgstar")
     Inlist.make_inlist(File.join(dir, 'inlist')) do
           read_extra_star_job_inlist1 true
