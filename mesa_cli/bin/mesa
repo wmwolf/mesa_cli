@@ -18,12 +18,14 @@ class MyCLI < Thor
 
   desc "new [NEW_DIR]", "Create MESA work dir called NEW_DIR (default 'work')."
   long_desc <<-LONGDESC
+
     `mesa new` will create a new work directory generated from your current
     $MESA_DIR/star/work. The argument specifies the name of the new directory,
     and the base name of the directory will be used to rename `inlist_project`
     to `inlist_BASENAME_OF_ARGUMENT`. Finally, it uses MesaScript to point the
     base `inlist` to the new one and converts the new inlist to MesaScript for
     easy automation. This is only done if MesaScript is available.
+
   LONGDESC
   def new(new_dir="work")
     return unless check_for_mesa_dir
@@ -68,6 +70,12 @@ class MyCLI < Thor
     be the name of the new directory. If this is omitted, the name remains the
     same. If no arguments are given a list of available test suite cases are
     printed out and no directories are copied.
+
+    The resulting directory will have all references to custom values of 
+    MESA_DIR removed and any local paths (like ../../inlist_massive_defaults)
+    will be converted to fully-qualified paths (like 
+    $MESA_DIR/star/massive_defaults). The resulting work directory should be
+    ready to make and run immediately as if it were in the test suite directory.
   LONGDESC
   option :list, :type => :boolean, :aliases => :l, 
   :desc => "lists available test suite cases"
@@ -92,6 +100,7 @@ class MyCLI < Thor
     FileUtils.cp_r(work_dir, new_dir, :verbose => true)
     inlist_files = Dir.glob(File.join(new_dir,"inlist*"))
     inlist_files.each do |inlist_file|
+
       # remove references to a new MESA_DIR
       inlist_lines = IO.readlines(inlist_file).reject do |line|
         line.downcase =~ /mesa_dir/
@@ -133,12 +142,17 @@ class MyCLI < Thor
         end
       end
 
+      # write out cleaned up inlist
       IO.write(inlist_file, new_inlist_lines.join)
     end
+
+    # Clean up makefule
     makefile = File.join(new_dir, 'make', 'makefile')
     make_lines = IO.readlines(makefile)
+
     # Make sure MESA_DIR is not set in makefile
     make_lines.reject! { |line| line =~ /\A\s*MESA_DIR/ }
+
     # Make sure no local references to files in mesa tree are made
     make_lines.reject! { |line| line =~ /\.\./ }
     make_lines.reject! { |line| line.empty? }
@@ -189,8 +203,6 @@ class MyCLI < Thor
 
           read_extra_pgstar_inlist1 true
           extra_pgstar_inlist1_name pgstar
-  
-      # / ! end of pgstar namelist
     end
   end
 end
