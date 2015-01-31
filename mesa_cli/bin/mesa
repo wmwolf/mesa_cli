@@ -96,6 +96,34 @@ class MyCLI < Thor
       inlist_lines = IO.readlines(inlist_file).reject do |line|
         line.downcase =~ /mesa_dir/
       end
+
+      # remove references to inlist_test_suite
+      bad_numbers = []
+      bad_namelists = []
+      inlist_lines.each do |line|
+        if line =~ /inlist_test_suite/
+          line =~ /extra_(.+)_inlist(\d)/
+          bad_namelists << $1
+          bad_numbers << $2
+        end
+      end
+      bad_combos = bad_namelists.zip(bad_numbers)
+      bad_words = []
+      bad_combos.each do |namelist, number|
+        bad_words << "read_extra_#{namelist}_inlist#{number}"
+        bad_words << "extra_#{namelist}_inlist#{number}_name"
+      end
+      inlist_lines.reject! do |line|
+        any_found = false
+        bad_words.each do |bad_word|
+          if line.include?(bad_word)
+            any_found = true
+            break
+          end
+        end
+        any_found
+      end
+
       # make local paths fully-qualified
       new_inlist_lines = inlist_lines.map do |line|
         if line =~ /((\.\.\/)+)/
