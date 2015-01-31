@@ -74,8 +74,9 @@ class MyCLI < Thor
     The resulting directory will have all references to custom values of 
     MESA_DIR removed and any local paths (like ../../inlist_massive_defaults)
     will be converted to fully-qualified paths (like 
-    $MESA_DIR/star/massive_defaults). The resulting work directory should be
-    ready to make and run immediately as if it were in the test suite directory.
+    $MESA_DIR/star/inlist_massive_defaults). The resulting work directory should
+    be ready to make and run immediately as if it were in the test suite
+    directory.
   LONGDESC
   option :list, :type => :boolean, :aliases => :l, 
   :desc => "lists available test suite cases"

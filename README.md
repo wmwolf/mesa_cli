@@ -106,12 +106,16 @@ the same name as the original test suite case. If neither argument is given, a
 list of every file in `$MESA_DIR/star/test_suite` is output. The listing
 behavior can also be forced by adding the `-l` or `--list` option to the call.
 
-Word directories made in this way are "de-test-suited" in that calls back to
-`inlist_test_suite` or `inlist_massive_defaults` are deleted, any instance in
-the makefile or inlists where the MESA directory is set are deleted, and
-references to the directory `..` are deleted. THESE OMISSIONS MAY BREAK THE 
-TEST SUITE CASES. They are only meant to make sure that the work directories 
-are no longer dependent on their location in your filesystems.
+Work directories made in this way are "de-test-suited" in that calls back to
+`inlist_test_suite` are deleted along with any other attempts to change the value of `mesa_dir`. All local path definitions (ones using `../../` or the
+like) will be made fully qualified. For example, `../../../` will be turned
+into `$MESA_DIR/`. Thus, references to other inlists, like 
+`inlist_massive_defaults` or models, like those found in
+`$MESA_DIR/data/star_data`, should remain intact. IF THESE EXTERNAL REFERENCES
+CONTAIN LOCAL PATHS, THINGS WILL BREAK. The only inlist that is strictly barred
+from this process is `inlist_test_suite` which currently only serves to set
+the `mesa_dir` via a local path, so references to this inlist are always 
+deleted.
 
 
 
