@@ -8,6 +8,8 @@ rescue LoadError
   $use_mesascript = false
 end
 
+ALL_POSSIBLE_SCRIPTS = {"bash" => [".bash_profile", ".bashrc"]}
+
 class MyCLI < Thor
   option :simple, :type => :boolean, :aliases => :s,
   :desc => "Just copy work directory and rename it. Nothing done with " +
@@ -178,6 +180,68 @@ class MyCLI < Thor
     system("#{editor} #{File.join(defaults_dir, filename)}#{suffix}")
   end
 
+  desc "install VER_NUMBER [DIR_NAME]", "Installs mesa version VER_NUMBER."
+  long_desc <<-LONGDESC
+  Installs a user-specified version of MESA (latest version number is typically
+  found at http://mesa.sourceforge.net/prereqs.html). The login scripts will
+  also be updated to have the MESA_DIR environment variable point to the new
+  installation location. Currently only the Bourne again shell (bash) is
+  supported, though the actual installation (without login script adjustments)
+  can still be accomplished in other shells.
+  LONGDESC
+  method_option :shell, :type => "string", :aliases => "-s", :default => "bash",
+    :required => "true", :desc => "The shell to be used when editing login "+
+    "scripts. Default is 'bash'. Currently no other options."
+  method_option :basic, :type => "boolean", :aliases => "-b", :desc => "Force "+
+    "a basic installation, which skips any manipulation of login scripts."
+
+  def install(ver_number, custom_name=nil)
+
+    # download proper version of MESA via SVN
+    puts "Installing MESA version #{ver_number}. This will take awhile."
+    dir_name = custom_name || File.join(ENV['HOME'], "mesa-r#{ver_number}")
+    # system("svn co -r #{ver_number} " +
+      # "svn://svn.code.sf.net/p/mesa/code/trunk #{dir_name}")
+    puts "\nDownloaded MESA version #{ver_number}."
+
+    # install MESA
+    puts "Now installing. This will take awhile.\n"
+    start_dir = FileUtils::pwd
+    FileUtils::cd(File.join(dir_name, '..'))
+    system("./clean")
+    system("./install")
+    FileUtils::cd(start_dir)
+
+    if options[:basic]
+      puts "Installed MESA version #{ver_number} in #{dir_name}. Your login " +
+      "scripts likely still need to be updated. See \"Set your environment " +
+      "variables\" in http://mesa.sourceforge.net/prereqs.html for details."    
+      return
+    end
+
+    shell = options[:shell]
+
+    # detect login scripts    
+    possible_scripts = ALL_POSSIBLE_SCRIPTS[shell] || []
+    possible_scripts.map! { |script| File.join(ENV['HOME'], script) }
+    login_scripts = []
+    possible_scripts.each do |script|
+      login_scripts << script if File.exist?(script)
+    end
+
+    # update login scripts to set MESA_DIR properly
+    have_fixed = login_scripts.empty?
+    login_scripts.each do |script| 
+      fixed_this_one = adjust_script(script, dir_name, shell)
+      have_fixed = fixed_this_one unless have_fixed
+    end
+
+    # add MESA_DIR assignment if none are present, favoring .bash_profile
+    unless (have_fixed or login_scripts.empty?)
+      script = login_scripts[0]
+
+    end
+  end
 
   private
   def create_ms_file(inlist_name, ms_name)
@@ -206,6 +270,61 @@ class MyCLI < Thor
           extra_pgstar_inlist1_name pgstar
     end
   end
+
+  def adjust_script(script, dir_name, shell="bash")
+    have_fixed = false
+    case shell
+    when "bash"
+      # read in script to array of strings
+      contents = IO.readlines(script)
+
+      # identify lines with MESA_DIR assignment
+      lines_to_fix = []
+      contents.each_with_index do |line, i|
+        if line =~ /export MESA_DIR=.*/
+          lines_to_fix << i
+        end
+      end
+
+      # adjust MESA_DIR location and document changes
+      lines_to_fix.reverse.each do |i|
+        have_fixed = true
+        line = contents[i]
+        contents[i].sub!(/=.*/, "=#{dir_name}")
+        contents[i-1].insert("Changed MESA_DIR to #{dir_name} on #{Time.now} from mesa install script.")
+      end
+
+      # write out adjusted contents to file
+      if have_fixed
+        IO.write(script, contents.join)
+        puts "Adjusted MESA_DIR variable in #{script}."
+      end
+
+    else
+      raise "Cannot adjust #{script} because shell \"#{shell}\" is unsupported."
+    end
+    return have_fixed
+  end
+
+  def add_assignment_to_script(script, dir_name, shell="bash")
+    contents = IO.readlines(script)
+    comment_line = '# Added by mesa install tool on ' + Time.now.to_s + ".\n"
+    assignment_line = assignment_line('MESA_DIR', dir_name, shell)
+    contents << "\n"
+    contents << comment_line
+    contents << assignment_line
+    IO.write(script, contents.join)
+    puts "Added MESA_DIR environment variable to #{script}."
+  end
+
+  def assignment_line(var_name, value, shell)
+    case shell
+    when bash
+      "export #{var_name}=#{value}\n"
+    else
+      raise "Cannot make assignments for shell #{shell} because #{shell} is " +
+      "not a supported shell."
+    end
 end
 
 MyCLI.start(ARGV)
