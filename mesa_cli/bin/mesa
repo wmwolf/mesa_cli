@@ -207,10 +207,10 @@ class MyCLI < Thor
     # install MESA
     puts "Now installing. This will take awhile.\n"
     start_dir = FileUtils::pwd
-    FileUtils::cd(File.join(dir_name, '..'))
-    system("./clean")
-    system("./install")
-    FileUtils::cd(start_dir)
+    # FileUtils::cd(File.join(dir_name, '..'))
+    # system("./clean")
+    # system("./install")
+    # FileUtils::cd(start_dir)
 
     if options[:basic]
       puts "Installed MESA version #{ver_number} in #{dir_name}. Your login " +
@@ -291,7 +291,8 @@ class MyCLI < Thor
         have_fixed = true
         line = contents[i]
         contents[i].sub!(/=.*/, "=#{dir_name}")
-        contents[i-1].insert("Changed MESA_DIR to #{dir_name} on #{Time.now} from mesa install script.")
+        contents.insert(i-1, '# ' + "Changed MESA_DIR to #{dir_name} on " + 
+          "#{Time.now.ctime} from mesa install script.")
       end
 
       # write out adjusted contents to file
@@ -308,11 +309,9 @@ class MyCLI < Thor
 
   def add_assignment_to_script(script, dir_name, shell="bash")
     contents = IO.readlines(script)
-    comment_line = '# Added by mesa install tool on ' + Time.now.to_s + ".\n"
-    assignment_line = assignment_line('MESA_DIR', dir_name, shell)
     contents << "\n"
-    contents << comment_line
-    contents << assignment_line
+    contents << '# Added by mesa install tool on ' + Time.now.to_s + ".\n"
+    contents << assignment_line('MESA_DIR', dir_name, shell)
     IO.write(script, contents.join)
     puts "Added MESA_DIR environment variable to #{script}."
   end
@@ -325,6 +324,7 @@ class MyCLI < Thor
       raise "Cannot make assignments for shell #{shell} because #{shell} is " +
       "not a supported shell."
     end
+  end
 end
 
 MyCLI.start(ARGV)
