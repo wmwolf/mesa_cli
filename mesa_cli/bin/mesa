@@ -198,31 +198,47 @@ class MyCLI < Thor
   def install(ver_number, custom_name=nil)
 
     # download proper version of MESA via SVN
-    puts "Installing MESA version #{ver_number}. This will take awhile."
+    puts "Downloading MESA version #{ver_number}. This will take awhile."
+    puts ''
     dir_name = custom_name || File.join(ENV['HOME'], "mesa-r#{ver_number}")
     # system("svn co -r #{ver_number} " +
-      # "svn://svn.code.sf.net/p/mesa/code/trunk #{dir_name}")
-    puts "\nDownloaded MESA version #{ver_number}."
+    #   "svn://svn.code.sf.net/p/mesa/code/trunk #{dir_name}")
+    puts "Downloaded MESA version #{ver_number}."
+    puts ''
 
     # install MESA
-    puts "Now installing. This will take awhile.\n"
+    unless have_mesasdk?
+      puts "Installation failed: MESA SDK not set up properly."
+      puts ''
+      return
+    end
+    puts "Now installing. This will take awhile."
+    puts ''
     start_dir = FileUtils::pwd
-    # FileUtils::cd(File.join(dir_name, '..'))
-    # system("./clean")
-    # system("./install")
-    # FileUtils::cd(start_dir)
+    FileUtils::cd(File.join(dir_name))
+    system("./clean")
+    system("./install")
+    FileUtils::cd(start_dir)
 
-    if options[:basic]
+    # detect login scripts
+    shell = options[:shell]
+    possible_scripts = ALL_POSSIBLE_SCRIPTS[shell] || []
+
+    # stop if basic installation or if we don't know how to handle the shell
+
+    if options[:basic] or possible_scripts.empty?
+      if possible_scripts.empty? and not options[:basic]
+        puts "Don't know how to adjust login scripts for shell #{shell}. Exiting."
+        puts ''
+      end
       puts "Installed MESA version #{ver_number} in #{dir_name}. Your login " +
       "scripts likely still need to be updated. See \"Set your environment " +
-      "variables\" in http://mesa.sourceforge.net/prereqs.html for details."    
+      "variables\" in http://mesa.sourceforge.net/prereqs.html for details." 
+      puts ''   
       return
     end
 
-    shell = options[:shell]
-
     # detect login scripts    
-    possible_scripts = ALL_POSSIBLE_SCRIPTS[shell] || []
     possible_scripts.map! { |script| File.join(ENV['HOME'], script) }
     login_scripts = []
     possible_scripts.each do |script|
@@ -239,7 +255,6 @@ class MyCLI < Thor
     # add MESA_DIR assignment if none are present, favoring .bash_profile
     unless (have_fixed or login_scripts.empty?)
       script = login_scripts[0]
-
     end
   end
 
@@ -254,7 +269,18 @@ class MyCLI < Thor
   def check_for_mesa_dir
     return true if ENV['MESA_DIR']
 
-    puts "WARNING: No environment variable $MESA_DIR found. Exiting."
+    puts "WARNING: No environment variable MESA_DIR found. Exiting."
+    return false
+  end
+
+  def have_mesasdk?
+    return true if ENV['MESASDK_ROOT']
+
+    puts "No environment variable MESASDK_ROOT found. Be sure to download and "+
+    "install the latest MESA SDK for your system from "+
+    "http://www.astro.wisc.edu/~townsend/static.php?ref=mesasdk, being sure to"+
+    "set the MESASDK_ROOT environment variable and sourcing the SDK " +
+    "initialization script."
     return false
   end
 
