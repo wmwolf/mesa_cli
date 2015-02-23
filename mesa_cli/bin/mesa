@@ -211,7 +211,8 @@ class MyCLI < Thor
     # download proper version of MESA via SVN
     puts "Downloading MESA version #{ver_number}. This will take awhile."
     puts ''
-    dir_name = custom_name || File.join(ENV['HOME'], "mesa-r#{ver_number}")
+    dir_name = custom_name || "mesa-r#{ver_number}"
+    dir_name = File.absolute_path(dir_name)
     system("svn co -r #{ver_number} " +
       "svn://svn.code.sf.net/p/mesa/code/trunk #{dir_name}")
     puts "Downloaded MESA version #{ver_number}."
@@ -226,7 +227,7 @@ class MyCLI < Thor
     puts "Now installing. This will take awhile."
     puts ''
     start_dir = FileUtils::pwd
-    FileUtils::cd(File.join(dir_name))
+    FileUtils::cd dir_name
     system("./clean")
     system("./install")
     FileUtils::cd(start_dir)

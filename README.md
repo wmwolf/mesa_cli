@@ -40,7 +40,8 @@ as detailed below.
 
 To get quick information, type `mesa help` to list the commands and see what
 they do. For detailed information on a particular command, type `mesa help
-command` to learn about an individual command (replacing the word "command" with the actual subcommand name). Brief summaries of commands are below.
+command` to learn about an individual command (replacing the word "command" 
+with the actual subcommand name). Brief summaries of commands are below.
 
 ### default
 
@@ -58,6 +59,56 @@ instance,
     mesa default star_job
 
 will open `$MESA_DIR/star/defaults/star_job.defaults` in vim or whatever default editor you've set up.
+
+### install
+
+To use, just type
+
+    mesa install VERSION_NUMBER [DIR_NAME] --shell=MYSHELL
+
+This will do a fresh checkout of mesa (version number given by VERSION_NUMBER) 
+into a directory (named DIR_NAME, default is mesa-rXXXX, where XXXX is the 
+version number). After the checkout, mesa will install, and your login scripts 
+will be updated to point MESA_DIR to this new installation directory.
+
+By default, the shell is assumed to be bash, so `~/.bash_profile` and 
+`~/.bashrc` will be checked for instances of `MESA_DIR=` in these files, which
+are then updated to point to the new installation path. If no such assignments 
+are found, one will be added to `~/.bash_profile` (if that file does not 
+exist, it will be added to `~/.bashrc`, if it exists). There is a `--shell=` 
+option, but it is currently useless since there is only one shell option.
+
+Currently there is no support for the C shell, but this will be an feature in a future version. For a basic installation with no mucking around of shell scripts, add the `--basic` or `-b` flag.
+
+Some examples:
+
+    mesa install 9999
+
+will download and install mesa revision 9999 into a directory named
+`mesa-r9999` in the current directory. It will then try to find the files
+`~/.bash_profile` and `~/.bashrc`. If it finds them, it will first try to
+update any lines conatining `MESA_DIR=` to point them to the new,
+fully-qualified path to `mesa-r9999`. If no such lines are added, it will add
+the appropriate line (`export MESA_DIR=/PATH/TO/mesa-r9999`) at the end of one
+of those scripts, preferring `~/.bash_profile`.
+
+    mesa install $HOME/mesa_installations/my_latest_mesa 9999
+
+will download and install mesa revision 9999 into the directory
+`$HOME/mesa_installations/my_latest_mesa`. Then it will set `MESA_DIR` in 
+login scripts as in the previous example.
+
+    mesa install 9999 -b
+
+will download and install mesa revision 9999 into a directory named
+`mesa-r9999` in the current directory. It will not attempt to change login
+scripts.
+
+    mesa install $HOME/mesa_installations/my_latest_mesa 9999 -b
+
+will download and install mesa revision 9999 into the directory
+`$HOME/mesa_installations/my_latest_mesa`. It will not attempt to change login
+scripts.
 
 ### new
 
@@ -117,6 +168,13 @@ from this process is `inlist_test_suite` which currently only serves to set
 the `mesa_dir` via a local path, so references to this inlist are always 
 deleted.
 
+### version
+
+To use, just type
+
+    mesa version
+
+This will just print out the version number of mesa that is currently installed in your MESA_DIR.
 
 
 
