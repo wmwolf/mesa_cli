@@ -11,6 +11,17 @@ end
 ALL_POSSIBLE_SCRIPTS = {"bash" => [".bash_profile", ".bashrc"]}
 
 class MyCLI < Thor
+  desc "version", "Display the version number of currently installed MESA."
+
+  def version
+    return unless check_for_mesa_dir
+    v_num = IO.read(File.join(ENV['MESA_DIR'], 'data', 'version_number')).to_i
+    puts v_num
+    return v_num
+  end
+
+
+
   option :simple, :type => :boolean, :aliases => :s,
   :desc => "Just copy work directory and rename it. Nothing done with " +
            "MesaScript."
