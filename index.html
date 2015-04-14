@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mesa cli by wmwolf</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Mesa cli</h1>
+      <h2 class="project-tagline">Command line tools for use with open source MESA stellar evolution code.</h2>
+      <a href="https://github.com/wmwolf/mesa_cli" class="btn">View on GitHub</a>
+      <a href="https://github.com/wmwolf/mesa_cli/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/wmwolf/mesa_cli/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="mesa_cli" class="anchor" href="#mesa_cli" aria-hidden="true"><span class="octicon octicon-link"></span></a>mesa_cli</h1>
+
+<p>Command line tools for use with open source MESA stellar evolution code.</p>
+
+<p>I don't think this tool is done yet, but I wanted to get it out there. So far
+requires ruby, MesaScript, thor, and a working mesa directory accessed by
+<code>$MESA_DIR</code>.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<h3>
+<a id="rubygems-installation" class="anchor" href="#rubygems-installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rubygems Installation</h3>
+
+<p>Enter</p>
+
+<pre><code>gem install mesa_cli
+</code></pre>
+
+<p>or if that doesn't work, enter</p>
+
+<pre><code>sudo gem install mesa_cli
+</code></pre>
+
+<p>into your terminal. You should be done now!</p>
+
+<h3>
+<a id="manual-installation" class="anchor" href="#manual-installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Manual Installation</h3>
+
+<p>If, for some reason, the rubygems installation doesn't work, you may clone this
+repository and install the single file <code>mesa</code> (located in <code>mesa_cli/bin/mesa</code>)
+as detailed below.</p>
+
+<ol>
+<li>Make sure you have Ruby 1.8.7 or higher (1.9.3 recommended)</li>
+<li>Install <a href="http://wmwolf.github.io/MesaScript/">mesascript</a>.</li>
+<li>
+<p>Install the Thor gem via</p>
+
+<p>sudo gem install thor</p>
+</li>
+<li><p>Place <code>mesa</code> file in your path</p></li>
+</ol>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>To get quick information, type <code>mesa help</code> to list the commands and see what
+they do. For detailed information on a particular command, type <code>mesa help
+command</code> to learn about an individual command (replacing the word "command" 
+with the actual subcommand name). Brief summaries of commands are below.</p>
+
+<h3>
+<a id="default" class="anchor" href="#default" aria-hidden="true"><span class="octicon octicon-link"></span></a>default</h3>
+
+<p>To use, just type</p>
+
+<pre><code>mesa default NAMELIST_NAME
+</code></pre>
+
+<p>where namelist name is the name of a MESA star namelist, like <code>star_job</code>,
+<code>controls</code>, or <code>pgstar</code>.</p>
+
+<p>This command will open the proper defaults file for the corresponding namelist
+using whatever editor your system has set in the <code>EDITOR</code> variable. For
+instance,</p>
+
+<pre><code>mesa default star_job
+</code></pre>
+
+<p>will open <code>$MESA_DIR/star/defaults/star_job.defaults</code> in vim or whatever default editor you've set up.</p>
+
+<h3>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span class="octicon octicon-link"></span></a>install</h3>
+
+<p>To use, just type</p>
+
+<pre><code>mesa install VERSION_NUMBER [DIR_NAME] --shell=MYSHELL
+</code></pre>
+
+<p>This will do a fresh checkout of mesa (version number given by VERSION_NUMBER) 
+into a directory (named DIR_NAME, default is mesa-rXXXX, where XXXX is the 
+version number). After the checkout, mesa will install, and your login scripts 
+will be updated to point MESA_DIR to this new installation directory.</p>
+
+<p>By default, the shell is assumed to be bash, so <code>~/.bash_profile</code> and 
+<code>~/.bashrc</code> will be checked for instances of <code>MESA_DIR=</code> in these files, which
+are then updated to point to the new installation path. If no such assignments 
+are found, one will be added to <code>~/.bash_profile</code> (if that file does not 
+exist, it will be added to <code>~/.bashrc</code>, if it exists). There is a <code>--shell=</code> 
+option, but it is currently useless since there is only one shell option.</p>
+
+<p>Currently there is no support for the C shell, but this will be an feature in a future version. For a basic installation with no mucking around of shell scripts, add the <code>--basic</code> or <code>-b</code> flag.</p>
+
+<p>Some examples:</p>
+
+<pre><code>mesa install 9999
+</code></pre>
+
+<p>will download and install mesa revision 9999 into a directory named
+<code>mesa-r9999</code> in the current directory. It will then try to find the files
+<code>~/.bash_profile</code> and <code>~/.bashrc</code>. If it finds them, it will first try to
+update any lines conatining <code>MESA_DIR=</code> to point them to the new,
+fully-qualified path to <code>mesa-r9999</code>. If no such lines are added, it will add
+the appropriate line (<code>export MESA_DIR=/PATH/TO/mesa-r9999</code>) at the end of one
+of those scripts, preferring <code>~/.bash_profile</code>.</p>
+
+<pre><code>mesa install $HOME/mesa_installations/my_latest_mesa 9999
+</code></pre>
+
+<p>will download and install mesa revision 9999 into the directory
+<code>$HOME/mesa_installations/my_latest_mesa</code>. Then it will set <code>MESA_DIR</code> in 
+login scripts as in the previous example.</p>
+
+<pre><code>mesa install 9999 -b
+</code></pre>
+
+<p>will download and install mesa revision 9999 into a directory named
+<code>mesa-r9999</code> in the current directory. It will not attempt to change login
+scripts.</p>
+
+<pre><code>mesa install $HOME/mesa_installations/my_latest_mesa 9999 -b
+</code></pre>
+
+<p>will download and install mesa revision 9999 into the directory
+<code>$HOME/mesa_installations/my_latest_mesa</code>. It will not attempt to change login
+scripts.</p>
+
+<h3>
+<a id="new" class="anchor" href="#new" aria-hidden="true"><span class="octicon octicon-link"></span></a>new</h3>
+
+<p>To use, just type </p>
+
+<pre><code>mesa new DIR_NAME
+</code></pre>
+
+<p>where <code>DIR_NAME</code> is the name of a new MESA work directory.</p>
+
+<p>This makes a copy of <code>$MESA_DIR/star/work</code> into a directory with the name
+chosen. With no name (i.e. just typing <code>mesa new</code>), the directory will just be
+called work. The <code>inlist_project</code> will be renamed to <code>inlist_DIR_NAME</code>. If
+MesaScript is available, the main <code>inlist</code> file will be pointed to the newly-
+renamed <code>inlist_project</code>, and a MesaScript version of the new <code>inlist_project</code>
+will be made that compiles to <code>inlist_project</code>.</p>
+
+<p>The <code>-s</code> or <code>--simple</code> option will just copy the work directory and rename the
+directory only. No renaming of inlists or creation of MesaScript files will be
+done.</p>
+
+<p>The <code>-p</code> or <code>--pgstar</code> option will also point the main <code>inlist</code> file to the
+newly-named <code>inlist_project</code> file for the <code>pgstar</code> namelist instead of the
+default <code>inlist_pgstar</code>.</p>
+
+<h3>
+<a id="point" class="anchor" href="#point" aria-hidden="true"><span class="octicon octicon-link"></span></a>point</h3>
+
+<p>To use, just type</p>
+
+<pre><code>mesa point INLIST_TO_POINT_TO
+</code></pre>
+
+<p>where <code>INLIST_TO_POINT_TO</code> is the name of an inlist that you would like your local <code>inlist</code> file to point to. Currently this can only allow you to point to one inlist. By default, this will not point to the new inlist for the <code>pgstar</code> namelist, but it will for both of the <code>star_job</code> and <code>controls</code> namelists.</p>
+
+<p>The <code>-p</code> or <code>--pgstar</code> option will also point the main <code>inlist</code> file to the
+<code>INLIST_TO_POINT_TO</code> file for the <code>pgstar</code> namelist.</p>
+
+<h3>
+<a id="test" class="anchor" href="#test" aria-hidden="true"><span class="octicon octicon-link"></span></a>test</h3>
+
+<p>To use, just type</p>
+
+<pre><code>mesa test TEST_CASE DIR_NAME
+</code></pre>
+
+<p>where <code>TEST_CASE</code> is the name of a test case in <code>$MESA_DIR/star/test_suite</code> and <code>DIR_NAME</code> is the name of a directory to be created that will contain a copy of the proper test suite case.</p>
+
+<p>The second argument is optional, and if omitted, the new directory will have 
+the same name as the original test suite case. If neither argument is given, a
+list of every file in <code>$MESA_DIR/star/test_suite</code> is output. The listing
+behavior can also be forced by adding the <code>-l</code> or <code>--list</code> option to the call.</p>
+
+<p>Work directories made in this way are "de-test-suited" in that calls back to
+<code>inlist_test_suite</code> are deleted along with any other attempts to change the value of <code>mesa_dir</code>. All local path definitions (ones using <code>../../</code> or the
+like) will be made fully qualified. For example, <code>../../../</code> will be turned
+into <code>$MESA_DIR/</code>. Thus, references to other inlists, like 
+<code>inlist_massive_defaults</code> or models, like those found in
+<code>$MESA_DIR/data/star_data</code>, should remain intact. IF THESE EXTERNAL REFERENCES
+CONTAIN LOCAL PATHS, THINGS WILL BREAK. The only inlist that is strictly barred
+from this process is <code>inlist_test_suite</code> which currently only serves to set
+the <code>mesa_dir</code> via a local path, so references to this inlist are always 
+deleted.</p>
+
+<h3>
+<a id="version" class="anchor" href="#version" aria-hidden="true"><span class="octicon octicon-link"></span></a>version</h3>
+
+<p>To use, just type</p>
+
+<pre><code>mesa version
+</code></pre>
+
+<p>This will just print out the version number of mesa that is currently installed in your MESA_DIR.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/wmwolf/mesa_cli">Mesa cli</a> is maintained by <a href="https://github.com/wmwolf">wmwolf</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
