@@ -326,11 +326,11 @@ class MyCLI < Thor
 
       # adjust MESA_DIR location and document changes
       lines_to_fix.reverse.each do |i|
-        have_fixed = true
         line = contents[i]
         contents[i].sub!(/=.*/, "=#{dir_name}")
         contents.insert(i-1, '# ' + "Changed MESA_DIR to #{dir_name} on " + 
-          "#{Time.now.ctime} from mesa install script.")
+          "#{Time.now.ctime} from mesa install script.\n")
+        have_fixed = true
       end
 
       # write out adjusted contents to file
