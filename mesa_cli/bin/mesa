@@ -25,7 +25,7 @@ class MyCLI < Thor
   option :simple, :type => :boolean, :aliases => :s,
   :desc => "Just copy work directory and rename it. Nothing done with " +
            "MesaScript."
-  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar], 
+  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar],
   :desc => "Point `inlist` to main inlist for pgstar in addition to star_job " +
            "and controls (default points to `inlist_pgstar`)."
 
@@ -59,9 +59,9 @@ class MyCLI < Thor
       create_ms_file(new_inlist_name, File.join(new_loc, basename + '.rb'))
     end
   end
-  
+
   desc "point INLIST", "Point main `inlist` to INLIST."
-  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar], 
+  option :pgstar, :type => :boolean, :aliases => [:p, :pgstar],
   :desc => "Point `inlist` to INLIST for pgstar in addition to star_job " +
            "and controls (default points to `inlist_pgstar`)."
   def point(inlist)
@@ -71,31 +71,31 @@ class MyCLI < Thor
       create_control_inlist(Dir.pwd, inlist, inlist)
     end
   end
-  
+
   desc "test [TEST_SUITE_CASE] [NEW_DIR]", "Copy test suite case work " +
        "directory with name TEST_SUITE_CASE to location NEW_DIR."
   long_desc <<-LONGDESC
     `mesa test` will primarily create a new work directory based on an existing
     test case located in $MESA_DIR/star/test_suite. Since the structure of
-    these directories varies wildly, no MesaScript or renaming niceties are 
+    these directories varies wildly, no MesaScript or renaming niceties are
     done as in the standard `mesa new` command. The first argument is the name
     of the test suite case to be copied. The second argument, if provided, will
     be the name of the new directory. If this is omitted, the name remains the
     same. If no arguments are given a list of available test suite cases are
     printed out and no directories are copied.
 
-    The resulting directory will have all references to custom values of 
+    The resulting directory will have all references to custom values of
     MESA_DIR removed and any local paths (like ../../inlist_massive_defaults)
-    will be converted to fully-qualified paths (like 
+    will be converted to fully-qualified paths (like
     $MESA_DIR/star/inlist_massive_defaults). The resulting work directory should
     be ready to make and run immediately as if it were in the test suite
     directory.
   LONGDESC
-  option :list, :type => :boolean, :aliases => :l, 
+  option :list, :type => :boolean, :aliases => :l,
   :desc => "lists available test suite cases"
-  
+
   def test(test_case=nil, new_dir=nil)
-    return unless check_for_mesa_dir 
+    return unless check_for_mesa_dir
 
     test_suite_dir = File.join(ENV['MESA_DIR'], 'star', 'test_suite')
     if options[:list] or test_case.nil?
@@ -103,7 +103,7 @@ class MyCLI < Thor
       puts Dir.entries(test_suite_dir).select { |entry| entry[0] != '.' }
       return
     end
-    
+
     work_dir = File.join(test_suite_dir, test_case)
     unless File.directory?(work_dir)
       puts "Unable to locate test suite case #{test_case} in directory " +
@@ -245,12 +245,12 @@ class MyCLI < Thor
       end
       puts "Installed MESA version #{ver_number} in #{dir_name}. Your login " +
       "scripts likely still need to be updated. See \"Set your environment " +
-      "variables\" in http://mesa.sourceforge.net/prereqs.html for details." 
-      puts ''   
+      "variables\" in http://mesa.sourceforge.net/prereqs.html for details."
+      puts ''
       return
     end
 
-    # detect login scripts    
+    # detect login scripts
     possible_scripts.map! { |script| File.join(ENV['HOME'], script) }
     login_scripts = []
     possible_scripts.each do |script|
@@ -259,7 +259,7 @@ class MyCLI < Thor
 
     # update login scripts to set MESA_DIR properly
     have_fixed = login_scripts.empty?
-    login_scripts.each do |script| 
+    login_scripts.each do |script|
       fixed_this_one = adjust_script(script, dir_name, shell)
       have_fixed = fixed_this_one unless have_fixed
     end
@@ -277,7 +277,7 @@ class MyCLI < Thor
     output = File.join(ms_name)
     Inlist.inlist_to_mesascript(source, output) if $use_mesascript
   end
-  
+
   def check_for_mesa_dir
     return true if ENV['MESA_DIR']
 
@@ -329,8 +329,8 @@ class MyCLI < Thor
         have_fixed = true
         line = contents[i]
         contents[i].sub!(/=.*/, "=#{dir_name}")
-        contents.insert(i-1, '# ' + "Changed MESA_DIR to #{dir_name} on " + 
-          "#{Time.now.ctime} from mesa install script.")
+        contents.insert(i, '# ' + "Changed MESA_DIR to #{dir_name} on " +
+          "#{Time.now.ctime} from mesa install script.\n")
       end
 
       # write out adjusted contents to file
