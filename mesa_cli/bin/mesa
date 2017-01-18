@@ -270,6 +270,62 @@ class MyCLI < Thor
     end
   end
 
+  desc "rates REACTION [OUTFILE]", "Calculate and output out reaction rates"
+
+  long_desc <<-LONGDESC
+  Calls the `show_rates' executable from $MESA_DIR/rates/test for a REACTION
+  found in $MESA_DIR/data/rates_data/cache. The reaction is whatever comes 
+  after "r" or "r_" in the .bin file in the cache directory. You may also
+  include the number at the end if you'd like to specify which rate to use, but 
+  if none is provided, the "_1" option will be used.
+
+  If OUTFILE is provided, the output is redirected to a text file with the name
+  indicated by OUTFILE. Otherwise it is simply written to the screen.
+  LONGDESC
+
+  def rates(reaction, outfile = '')
+    return unless check_for_mesa_dir
+    cache_dir = File.join(ENV['MESA_DIR'], 'data', 'rates_data', 'cache')
+
+    # set up regular expressions; allow for specific ending number (first case)
+    # or leave it ambiguous (second case)
+    if reaction =~ /_\d$/
+      matcher = /r_?#{reaction}\.bin/
+    else
+      matcher = /r_?#{reaction}_(\d)\.bin/
+    end
+
+    # search for matching cache files. Return if none are found and find lowest
+    # "number" cache file if multiple matches are found
+    rate_files = Dir.entries(cache_dir).select( |f| f =~ matcher )
+    case rate_files.length
+    when 0
+      puts "No reactions matching #{reaction} found in #{cache_dir}. Exiting."
+      return
+    when 1
+      rate_file = File.join(cache_dir, reactions[0])
+    else
+      min_num = nil
+      rate_file = nil
+      rate_files.each do |f|
+        if min_num.nil? or matcher.match(f).captures.first.to_i < min_num
+          min_num = matcher.match(f).captures.first.to_i
+          rate_file = f
+        end
+      end
+    end
+
+    # Execute the `show_rates` function and capture the output
+
+    # scrub the output for poorly formatted floats
+
+    # save output to screen or to file
+
+    end
+
+
+
+
   private
   def create_ms_file(inlist_name, ms_name)
     ms_name += '.rb' unless ms_name[-3..-1] == '.rb'
@@ -361,6 +417,13 @@ class MyCLI < Thor
       raise "Cannot make assignments for shell #{shell} because #{shell} is " +
       "not a supported shell."
     end
+  end
+
+  def visit(new_dir)
+    old_dir = Dir.pwd
+    Dir.chdir(new_dir)
+    yield
+    Dir.chdir(old_dir)
   end
 end
 
