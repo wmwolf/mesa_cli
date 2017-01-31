@@ -144,6 +144,17 @@ where `INLIST_TO_POINT_TO` is the name of an inlist that you would like your loc
 The `-p` or `--pgstar` option will also point the main `inlist` file to the
 `INLIST_TO_POINT_TO` file for the `pgstar` namelist.
 
+
+### rates
+
+To use, just type
+
+    mesa rates REACTION_NAME OUTFILE
+
+where `REACTION_NAME` is the name of a reaction found in `$MESA_DIR/data/rates_data/cache`, without the preceding `r_` and optionally specifying `_1`, `_2`, or whatever other option is available. For instance, `c12_pg_n13` is a valid `REACTION_NAME`, as is `c12_pg_n13_1`. If no ending number is specified, `_1` is assumed.
+
+`OUTFILE` is an optional argument that specifies a file name where the rate data will be written to. If it is omitted, the data is simply written to the standard output.
+
 ### test
 
 To use, just type
