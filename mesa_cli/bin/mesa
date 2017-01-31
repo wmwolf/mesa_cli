@@ -281,6 +281,16 @@ class MyCLI < Thor
 
   If OUTFILE is provided, the output is redirected to a text file with the name
   indicated by OUTFILE. Otherwise it is simply written to the screen.
+
+  For example,\n
+  
+  >>> mesa rates c12_pg_n13
+
+  will spit 10,000 lines of rate data to the terminal, while
+
+  >>> mesa rates c12_pg_n13 c12_pg_n13.data
+
+  will save the same data to a file, c12_pg_n13.data.
   LONGDESC
 
   def rates(reaction, outfile = '')
@@ -297,7 +307,7 @@ class MyCLI < Thor
 
     # search for matching cache files. Return if none are found and find lowest
     # "number" cache file if multiple matches are found
-    rate_files = Dir.entries(cache_dir).select( |f| f =~ matcher )
+    rate_files = Dir.entries(cache_dir).select { |f| f =~ matcher }
     case rate_files.length
     when 0
       puts "No reactions matching #{reaction} found in #{cache_dir}. Exiting."
@@ -310,21 +320,44 @@ class MyCLI < Thor
       rate_files.each do |f|
         if min_num.nil? or matcher.match(f).captures.first.to_i < min_num
           min_num = matcher.match(f).captures.first.to_i
-          rate_file = f
+          rate_file = File.join(cache_dir, f)
         end
       end
     end
 
+    data = ''
     # Execute the `show_rates` function and capture the output
+    visit File.join(ENV['MESA_DIR'], 'rates', 'test') do
+      data = `./show_rates #{rate_file}`
+    end
 
     # scrub the output for poorly formatted floats
 
-    # save output to screen or to file
-
+    lines = data.split("\n")[4..-1]
+    t8 = []
+    sigv = []
+    float_matcher = /(\d\.\d+)D?(\-|\+)(\d+)/i
+    lines.each do |line|
+      new_t8, new_sigv = line.split
+      new_t8 =~ float_matcher
+      t8 << $1.to_f * (10**(exp_sign($2) * $3.to_i))
+      new_sigv =~ float_matcher
+      sigv << $1.to_f * (10**(exp_sign($2) * $3.to_i))
     end
+    lines = t8.zip(sigv).map do |pair|
+      sprintf("%-26.16e", pair[0]) + sprintf("%-26.16e", pair[1])
+    end
+    data = lines.join("\n")
 
-
-
+    # save output to screen or to file
+    if outfile.empty?
+      puts data
+    else
+      File.open(outfile, 'w') do |f|
+        f.puts data
+      end
+    end
+  end
 
   private
   def create_ms_file(inlist_name, ms_name)
@@ -424,6 +457,17 @@ class MyCLI < Thor
     Dir.chdir(new_dir)
     yield
     Dir.chdir(old_dir)
+  end
+
+  def exp_sign(str)
+    case str
+    when '-'
+      return -1
+    when '+'
+      return 1
+    else
+      raise "invalid sign: #{exp_sign}"
+    end
   end
 end
 
