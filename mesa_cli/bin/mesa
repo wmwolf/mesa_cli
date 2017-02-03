@@ -313,7 +313,7 @@ class MyCLI < Thor
       puts "No reactions matching #{reaction} found in #{cache_dir}. Exiting."
       return
     when 1
-      rate_file = File.join(cache_dir, reactions[0])
+      rate_file = File.join(cache_dir, rate_files[0])
     else
       min_num = nil
       rate_file = nil
