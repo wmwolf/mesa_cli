@@ -8,7 +8,10 @@ rescue LoadError
   $use_mesascript = false
 end
 
-ALL_POSSIBLE_SCRIPTS = {"bash" => [".bash_profile", ".bashrc"]}
+ALL_POSSIBLE_SCRIPTS = {
+  "bash" => [".bash_profile", ".bashrc"],
+  "zsh" => [".zshenv", ".zshrc"]
+}
 
 class MyCLI < Thor
   desc "version", "Display the version number of currently installed MESA."
@@ -263,11 +266,6 @@ class MyCLI < Thor
       fixed_this_one = adjust_script(script, dir_name, shell)
       have_fixed = fixed_this_one unless have_fixed
     end
-
-    # add MESA_DIR assignment if none are present, favoring .bash_profile
-    unless (have_fixed or login_scripts.empty?)
-      script = login_scripts[0]
-    end
   end
 
   desc "rates REACTION [OUTFILE]", "Calculate and output out reaction rates"
@@ -401,7 +399,7 @@ class MyCLI < Thor
   def adjust_script(script, dir_name, shell="bash")
     have_fixed = false
     case shell
-    when "bash"
+    when %w{bash zsh}
       # read in script to array of strings
       contents = IO.readlines(script)
 
@@ -415,7 +413,6 @@ class MyCLI < Thor
 
       # adjust MESA_DIR location and document changes
       lines_to_fix.reverse.each do |i|
-        line = contents[i]
         contents[i].sub!(/=.*/, "=#{dir_name}")
         contents.insert(i, '# ' + "Changed MESA_DIR to #{dir_name} on " +
           "#{Time.now.ctime} from mesa install script.\n")
