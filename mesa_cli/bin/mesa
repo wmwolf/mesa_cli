@@ -4,7 +4,7 @@ require "fileutils"
 begin
   require "mesa_script"
   $use_mesascript = true
-rescue LoadError
+rescue LoadError, TypeError
   $use_mesascript = false
 end
 
