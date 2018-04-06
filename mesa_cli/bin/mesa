@@ -171,7 +171,7 @@ class MyCLI < Thor
     make_lines.reject! { |line| line =~ /\A\s*MESA_DIR/ }
 
     # Make sure no local references to files in mesa tree are made
-    make_lines.reject! { |line| line =~ /\.\./ }
+    make_lines.reject! { |line| line =~ /\.\.\/\.\./ }
     make_lines.reject! { |line| line.empty? }
     IO.write(makefile, make_lines.join)
   end
