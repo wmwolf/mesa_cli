@@ -216,8 +216,8 @@ class MyCLI < Thor
     puts ''
     dir_name = custom_name || "mesa-r#{ver_number}"
     dir_name = File.absolute_path(dir_name)
-    system("svn co -r #{ver_number} " +
-      "https://subversion.assembla.com/svn/mesa^mesa/trunk mesa #{dir_name}")
+    svn_uri = 'https://subversion.assembla.com/svn/mesa\^mesa/trunk'.freeze
+    system("svn co -r #{ver_number} #{svn_uri} #{dir_name}")
     puts "Downloaded MESA version #{ver_number}."
     puts ''
 
